@@ -12,7 +12,7 @@ XXX_co-exp.csv : corrが0.9以上のペアをPROBE_IDでリストアップした
 
 XXX.soft : NCBIからダウンロードしてきた生データ
 
-XXX.soft : 
+XXX.txt : .softファイルの余計な部分を取り除いたファイル。 
 
 
 
