@@ -1,71 +1,45 @@
 import os
 import pickle
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
-from tqdm import tqdm
+import pandas as pd
 from torch.utils.data import Dataset
 
 class CustomDataset(Dataset):
 
-    def __init__(self, root: str, datatype: str,
-                 data_split_seed: int=1, transform:Optional[List]=None):
+    def __init__(self, root: str, seed: int=1):
         """
         Args:
             root (str): Path to dataset directory.
-            datatype (str): Dataset type to load (train, valid, test)
-            data_split_seed (int): Integer value for dataset split number.
-            transform (List): List of transformations to be applied.
         """
-        assert(datatype in ["train", "valid", "test"])
+        gene_set = "GDS5420" # temporal
 
         self.root = root
-        self.seed = data_split_seed
+        self.seed = seed
 
-        data, label = self._load_data(datatype)
+        data = self._load_data(gene_set)
         self.data = self._process_data(data)
-        self.label = self._process_label(label)
-
-        self.transform = transform
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, index):
-        data, label = self.data[index], self.label[index]
+        data = self.data[index]
 
-        # TODO: Check if transform is working.
-        if self.transform:
-            data = self.transform(data)
+        return data
 
-        return data, label
-
-    def _load_data(self, datatype: str) -> Tuple[np.ndarray, np.ndarray]:
+    def _load_data(self, gene_set: str) -> np.ndarray:
         """
         Args:
             datatype (str)
         Returns:
-            X:
-            y:
+            data (np.ndarray): Array of shape [N pairs, 2].
         """
-        Xfile = f"X_{datatype}_seed{self.seed}.pkl"
-        yfile = f"y_{datatype}_seed{self.seed}.pkl"
-        X, y = self._open_pickle(Xfile), self._open_pickle(yfile)
-        return X, y
-
-    def _open_pickle(self, filename: str) -> np.ndarray:
-        """
-        Open pickled file.
-
-        Args:
-            filename (str):
-        Returns:
-            data (np.ndarray):
-        """
-        file_loc = os.path.join(self.root, filename)
-        with open(file_loc, "rb") as fp:
-            data = pickle.load(fp)
-        return np.array(data)
+        targetfile = os.path.join(self.root, f"{gene_set}_co-exp.csv")
+        df_csv = pd.read_csv(targetfile)
+        data = df_csv.values
+        return data
 
     def _process_data(self, data):
         """
@@ -74,20 +48,10 @@ class CustomDataset(Dataset):
         Returns:
             data
         """
-        data = data.astype(float)
-        data /= 255.
         return data
 
-    def _process_label(self, label):
-        """
-        Args:
-            label
-        Returns:
-            label
-        """
-        return label
 
 if __name__ == "__main__":
-    data_loc = "/Users/naokinonaka/dev_dir/data/MNIST/processed_np"
-    dataset = CustomDataset(data_loc, "valid")
+    data_loc = "/home/naokinonaka/git/probe2vec/data"
+    dataset = CustomDataset(data_loc)
     print(dataset[0])
