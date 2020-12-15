@@ -295,10 +295,11 @@ def train_sg_pair(model, word, context_index, alpha, learn_vectors=True, learn_h
             print(word_indices)
         # input()
         l2b = model.syn1neg[word_indices]  # 2d matrix, k+1 x layer1_size
+        # 各word_indicesに対応するベクトルを得る
         print(l2b.shape)
         # input()
-        prod_term = dot(l1, l2b.T)
-        fb = expit(prod_term)  # propagate hidden -> output
+        prod_term = dot(l1, l2b.T) # 内積を計算
+        fb = expit(prod_term)  # propagate hidden -> output（Sigmoidを適用）
         print(prod_term)
         print(fb)
         # input()
