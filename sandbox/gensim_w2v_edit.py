@@ -126,14 +126,22 @@ def train_batch_sg(model, sentences, alpha, work=None, compute_loss=False):
     for sentence in tqdm(sentences):
         word_vocabs = [model.wv.vocab[w] for w in sentence if w in model.wv.vocab and
                        model.wv.vocab[w].sample_int > model.random.rand() * 2 ** 32]
+        # print(sentence)
+        # print(word_vocabs[0].__dict__)
+        # input()
         for pos, word in enumerate(word_vocabs):
             reduced_window = model.random.randint(model.window)  # `b` in the original word2vec code
-
             # now go over all words from the (reduced) window, predicting each one in turn
             start = max(0, pos - model.window + reduced_window)
+            print(reduced_window)
+            print(start)
+            # input()
             for pos2, word2 in enumerate(word_vocabs[start:(pos + model.window + 1 - reduced_window)], start):
                 # don't train on the `word` itself
                 if pos2 != pos:
+                    print(pos, pos2, word, word2)
+                    print(model.wv.index2word[word.index], word2.index)
+                    # input()
                     train_sg_pair(
                         model, model.wv.index2word[word.index], word2.index, alpha, compute_loss=compute_loss
                     )
@@ -221,23 +229,29 @@ def score_sentence_cbow(model, sentence, work=None, neu1=None):
 
 def train_sg_pair(model, word, context_index, alpha, learn_vectors=True, learn_hidden=True,
                   context_vectors=None, context_locks=None, compute_loss=False, is_ft=False):
+
     if context_vectors is None:
         if is_ft:
             context_vectors_vocab = model.wv.syn0_vocab
             context_vectors_ngrams = model.wv.syn0_ngrams
         else:
             context_vectors = model.wv.syn0
+    print("context_vector", context_vectors)
     if context_locks is None:
         if is_ft:
             context_locks_vocab = model.syn0_vocab_lockf
             context_locks_ngrams = model.syn0_ngrams_lockf
         else:
             context_locks = model.syn0_lockf
-
+    print("context_locks", context_locks)
+    # input()
     if word not in model.wv.vocab:
         return
     predict_word = model.wv.vocab[word]  # target word (NN output)
 
+    print("pred_word", predict_word)
+    print(is_ft, model.hs, model.negative)
+    # input()
     if is_ft:
         l1_vocab = context_vectors_vocab[context_index[0]]
         l1_ngrams = np_sum(context_vectors_ngrams[context_index[1:]], axis=0)
@@ -247,9 +261,14 @@ def train_sg_pair(model, word, context_index, alpha, learn_vectors=True, learn_h
         l1 = context_vectors[context_index]  # input word (NN input/projection layer)
         lock_factor = context_locks[context_index]
 
+    print(l1)
+    print(context_index)
+    print(lock_factor)
+    # input()
     neu1e = zeros(l1.shape)
 
     if model.hs:
+        aaa
         # work on the entire tree at once, to push as much work into numpy's C routines as possible (performance)
         l2a = deepcopy(model.syn1[predict_word.point])  # 2d matrix, codelen x layer1_size
         prod_term = dot(l1, l2a.T)
@@ -272,10 +291,22 @@ def train_sg_pair(model, word, context_index, alpha, learn_vectors=True, learn_h
             w = model.cum_table.searchsorted(model.random.randint(model.cum_table[-1]))
             if w != predict_word.index:
                 word_indices.append(w)
+            print(w)
+            print(word_indices)
+        # input()
         l2b = model.syn1neg[word_indices]  # 2d matrix, k+1 x layer1_size
+        print(l2b.shape)
+        # input()
         prod_term = dot(l1, l2b.T)
         fb = expit(prod_term)  # propagate hidden -> output
+        print(prod_term)
+        print(fb)
+        # input()
         gb = (model.neg_labels - fb) * alpha  # vector of error gradients multiplied by the learning rate
+        print(model.neg_labels) # Negative labelかのbinary値; [1, 0, .., 0]
+        print(gb)
+        input()
+
         if learn_hidden:
             model.syn1neg[word_indices] += outer(gb, l1)  # learn hidden -> output
         neu1e += dot(gb, l2b)  # save error
