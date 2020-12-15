@@ -1,14 +1,15 @@
 import os
-import torch
-import torch.nn as nn
 import random
 from datetime import datetime
 from typing import Iterable
 from importlib import import_module
 
+import torch
+import torch.nn as nn
+
 import config
 from codes.data.dataset import CustomDataset as Dataset
-from codes.data.dataloader import CustomDataLoader as DataLoader
+from codes.data.p2v_dataloader import Probe2VecDataLoader as DataLoader
 from codes.functions.train_sample import SampleTrainer as Trainer
 
 import warnings
@@ -16,19 +17,21 @@ warnings.filterwarnings("ignore")
 
 torch.backends.cudnn.deterministic=True
 
+data_loc = "../data/" # Temporal
+SAVEDIR = "./result"
+
 class TrainExecuter(object):
 
     def __init__(self, args):
 
         self.args = args
-        self.data_loc = os.path.join(config.root, config.dirname,
-                                     config.data_loc)
+        self.data_loc = data_loc
 
         timestamp = self._get_timestamp()
         param_string = self._prepare_param_string()
 
-        save_dir = os.path.join(config.save_dir, "model", param_string, timestamp)
-        log_dir = os.path.join(config.save_dir, "logs", param_string, timestamp)
+        save_dir = os.path.join(SAVEDIR "model", param_string, timestamp)
+        log_dir = os.path.join(SAVEDIR, "logs", param_string, timestamp)
 
         self.trainer = Trainer(args.ep, save_dir=save_dir,
                                log_dir=log_dir, device=args.device)
@@ -91,7 +94,8 @@ class TrainExecuter(object):
         dataset = Dataset(self.data_loc, datatype,
                           data_split_seed=self.args.seed)
 
-        loader = DataLoader(dataset, self.args.bs, is_eval=is_eval,
+        loader = DataLoader(dataset, self.args.bs,
+                            num_negative=self.args.negative, is_eval=is_eval,
                             device=self.args.device, seed=self.args.seed)
         return loader
 
