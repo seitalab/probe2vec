@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from torch.utils.data import Dataset
 
 class CustomDataset(Dataset):
@@ -37,9 +38,13 @@ class CustomDataset(Dataset):
         Returns:
             data (np.ndarray): Array of shape [N pairs, 2].
         """
-        targetfile = os.path.join(self.root, f"{gene_set}_co-exp.csv")
-        df_csv = pd.read_csv(targetfile)
-        data = df_csv.values
+        # targetfile = os.path.join(self.root, f"{gene_set}_co-exp.csv")
+        # df_csv = pd.read_csv(targetfile)
+        # data = df_csv.values
+        # return data
+        targetfile = os.path.join(self.root, f"{gene_set}_co-exp.pkl")
+        with open(targetfile, "rb") as fp:
+            data = pickle.load(fp)
         return data
 
     def _process_data(self, data):
@@ -49,6 +54,16 @@ class CustomDataset(Dataset):
         Returns:
             data
         """
+        # uniques = np.unique(data.flatten())
+        # new_data = []
+        # print(f"Processing data ...")
+        # for row in tqdm(data):
+        #     idx1 = np.where(uniques == row[0])[0]
+        #     idx2 = np.where(uniques == row[1])[0]
+        #     new_data.append([idx1, idx2])
+        # new_data = np.stack(new_data)
+        # print(new_data.shape)
+        # return new_data
         return data
 
 

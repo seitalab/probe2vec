@@ -107,8 +107,8 @@ class Probe2VecDataLoader(object):
         pair_1 = self._numpy_to_torch(pair_1)
         pair_2 = self._numpy_to_torch(pair_2)
         label = self._numpy_to_torch(label)
-        pair_1, pair_2, label = pair_1.long(), pair_2.long(), label.long()
-        return pair_1, pair_2, label
+        pair_1, pair_2, label = pair_1.long(), pair_2.long(), label.float()
+        return (pair_1, pair_2), label
 
 if __name__ == '__main__':
     pass

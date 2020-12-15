@@ -10,8 +10,20 @@ from tensorboardX import SummaryWriter
 from codes.data.dataloader import CustomDataLoader as DataLoader
 from codes.supports.monitor import Monitor
 from codes.functions.train_base import BaseTrainer
+from codes.functions.loss import W2VLoss
 
 class Probe2VecTrainer(BaseTrainer):
+
+    def set_lossfunc(self) -> None:
+        """
+        Set loss function.
+
+        Args:
+            None
+        Returns:
+            None
+        """
+        self.loss_func = W2VLoss()
 
     def _train(self, iterator: Iterable) -> float:
         """
@@ -24,21 +36,19 @@ class Probe2VecTrainer(BaseTrainer):
         monitor = Monitor()
         self.model.train()
 
-        for pair in tqdm(iterator):
+        for pair, label in tqdm(iterator):
             self.optimizer.zero_grad()
 
-            y_pred = self.model(X)
-            y_pred = F.softmax(y_pred, dim=-1)
-            minibatch_loss = self.loss_func(y_pred, y)
+            pair_1 = self.model(pair[0])
+            pair_2 = self.model(pair[1])
+            minibatch_loss = self.loss_func(pair_1, pair_2, label)
             minibatch_loss.backward()
             self.optimizer.step()
 
-            monitor.store_loss(float(minibatch_loss), len(X))
-            monitor.store_result(y, y_pred)
+            monitor.store_loss(float(minibatch_loss), len(pair_1))
 
         loss = monitor.average_loss()
-        accuracy = monitor.accuracy()
-        return loss, accuracy
+        return loss
 
     def _evaluate(self, iterator: Iterable) -> float:
         """
@@ -53,17 +63,15 @@ class Probe2VecTrainer(BaseTrainer):
         self.model.eval()
 
         with torch.no_grad():
-            for X, y in tqdm(iterator):
+            for pair, label in tqdm(iterator):
 
-                y_pred = self.model(X)
-                y_pred = F.softmax(y_pred, dim=-1)
-                minibatch_loss = self.loss_func(y_pred, y)
+                pair_1 = self.model(pair[0])
+                pair_2 = self.model(pair[1])
+                minibatch_loss = self.loss_func(pair_1, pair_2, label)
 
-                monitor.store_loss(float(minibatch_loss), len(X))
-                monitor.store_result(y, y_pred)
+                monitor.store_loss(float(minibatch_loss), len(pair_1))
 
         loss = monitor.average_loss()
-        accuracy = monitor.accuracy()
         return loss, accuracy
 
     def run(self, train_loader: Iterable, valid_loader: Iterable) -> None:
@@ -81,16 +89,14 @@ class Probe2VecTrainer(BaseTrainer):
         for epoch in range(1, self.epochs+1):
             print("-"*80)
             print(f"Epoch {epoch}")
-            train_loss, train_acc = self._train(train_loader)
+            train_loss = self._train(train_loader)
             writer.add_scalar("train_loss", train_loss, epoch)
-            writer.add_scalar("train_accuracy", train_acc, epoch)
-            print(f'-> Train loss: {train_loss:.4f}, accuracy: {train_acc:.4f}')
+            print(f'-> Train loss: {train_loss:.4f}')
 
             if epoch % self.report_every == 0:
-                eval_loss, eval_acc = self._evaluate(valid_loader)
+                eval_loss = self._evaluate(valid_loader)
                 writer.add_scalar("eval_loss", eval_loss, epoch)
-                writer.add_scalar("eval_accuracy", eval_acc, epoch)
-                print(f'-> Eval loss: {eval_loss:.4f}, accuracy: {eval_acc:.4f}')
+                print(f'-> Eval loss: {eval_loss:.4f}')
 
                 if eval_loss < best_loss:
                     print(f"Validation loss improved {best_loss:.4f} -> {eval_loss:.4f}")

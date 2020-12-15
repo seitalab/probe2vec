@@ -14,7 +14,7 @@ parser.add_argument('--optim', type=str, default="adam")
 parser.add_argument('--device', type=str, default="cpu")
 parser.add_argument('--save-every', type=int, default=5)
 
-parser.add_argument('--i_dim', type=int, default=28)
+parser.add_argument('--i_dim', type=int, default=25770)
 parser.add_argument('--h_dim', type=int, default=64)
 parser.add_argument('--negative', type=int, default=5)
 

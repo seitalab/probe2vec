@@ -48,7 +48,7 @@ class DataPreparator(object):
             idx1 = np.where(uniques == row[0])[0]
             idx2 = np.where(uniques == row[1])[0]
             new_data.append([idx1, idx2])
-        new_data = np.concatenate(new_data, axis=-1)
+        new_data = np.concatenate(new_data, axis=-1).T
         return new_data, uniques
 
     def process(self):
