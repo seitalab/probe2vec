@@ -9,7 +9,8 @@ import pandas as pd
 
 from gensim_w2v_edit import Word2Vec
 
-export_dir = "./result"
+export_dir = "./result/"
+os.makedirs(export_dir)
 
 print("start!")
 root = "../data"
