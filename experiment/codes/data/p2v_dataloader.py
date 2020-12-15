@@ -61,15 +61,30 @@ class Probe2VecDataLoader(object):
             pass
         return data
 
-    def _add_negatives(self, X_batch):
+    def _add_negatives(self, batch):
         """
         Args:
-
+            batch: [bs, 2]
         Returns:
-
+            X_rep:
+            Y_rep:
+            label: binary vector
         """
-        print(X_batch)
-        aa
+        X_rep = np.repeat(batch[:, 0], self.num_negative+1, axis=0)
+        Y_rep, label = [], []
+        for y in batch[:, 1]:
+            _ys = [y]
+            _label = [1]
+            while len(_ys) < self.num_negative + 1:
+                _y = np.random.choice(self.dataset.num_unique)
+                if _y != y:
+                    _ys.append(_y)
+                    _label.append(0)
+            Y_rep.append(_ys)
+            label.append(_label)
+        Y_rep = np.concatenate(Y_rep, axis=-1)
+        label = np.concatenate(label, axis=-1)
+        return X_rep, Y_rep, label
 
     def __len__(self):
         return self.num_batch
@@ -88,10 +103,12 @@ class Probe2VecDataLoader(object):
             self.itercount += 1
 
         X_batch = self.dataset[idx_s:idx_e]
-        X_batch = self._add_negatives(X_batch)
-        X_batch = self._numpy_to_torch(X_batch)
-        X_batch, y_batch = X_batch.float(), y_batch.long()
-        return X_batch, y_batch
+        pair_1, pair_2, label = self._add_negatives(X_batch)
+        pair_1 = self._numpy_to_torch(pair_1)
+        pair_2 = self._numpy_to_torch(pair_2)
+        label = self._numpy_to_torch(label)
+        pair_1, pair_2, label = pair_1.long(), pair_2.long(), label.long()
+        return pair_1, pair_2, label
 
 if __name__ == '__main__':
     pass

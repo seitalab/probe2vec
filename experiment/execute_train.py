@@ -7,10 +7,9 @@ from importlib import import_module
 import torch
 import torch.nn as nn
 
-import config
 from codes.data.dataset import CustomDataset as Dataset
 from codes.data.p2v_dataloader import Probe2VecDataLoader as DataLoader
-from codes.functions.train_sample import SampleTrainer as Trainer
+from codes.functions.train_p2v import Probe2VecTrainer as Trainer
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -30,7 +29,7 @@ class TrainExecuter(object):
         timestamp = self._get_timestamp()
         param_string = self._prepare_param_string()
 
-        save_dir = os.path.join(SAVEDIR "model", param_string, timestamp)
+        save_dir = os.path.join(SAVEDIR, "model", param_string, timestamp)
         log_dir = os.path.join(SAVEDIR, "logs", param_string, timestamp)
 
         self.trainer = Trainer(args.ep, save_dir=save_dir,
@@ -91,8 +90,7 @@ class TrainExecuter(object):
         """
         print("Preparing {} dataloader ...".format(datatype))
 
-        dataset = Dataset(self.data_loc, datatype,
-                          data_split_seed=self.args.seed)
+        dataset = Dataset(self.data_loc, seed=self.args.seed)
 
         loader = DataLoader(dataset, self.args.bs,
                             num_negative=self.args.negative, is_eval=is_eval,

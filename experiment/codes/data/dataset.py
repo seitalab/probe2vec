@@ -20,6 +20,7 @@ class CustomDataset(Dataset):
 
         data = self._load_data(gene_set)
         self.data = self._process_data(data)
+        self.num_unique = len(np.unique(self.data.flatten()))
 
     def __len__(self):
         return len(self.data)
