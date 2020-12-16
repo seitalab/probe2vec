@@ -72,7 +72,7 @@ class Probe2VecTrainer(BaseTrainer):
                 monitor.store_loss(float(minibatch_loss), len(pair_1))
 
         loss = monitor.average_loss()
-        return loss, accuracy
+        return loss
 
     def run(self, train_loader: Iterable, valid_loader: Iterable) -> None:
         """
